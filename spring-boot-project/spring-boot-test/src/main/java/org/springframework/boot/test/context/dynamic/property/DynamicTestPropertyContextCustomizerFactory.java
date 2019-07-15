@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.junit.platform.commons.util.AnnotationUtils;
-
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
@@ -44,34 +42,24 @@ public class DynamicTestPropertyContextCustomizerFactory
 
 	@Override
 	public ContextCustomizer createContextCustomizer(Class<?> testClass,
-													 List<ContextConfigurationAttributes> list) {
+			List<ContextConfigurationAttributes> list) {
 
 		processDynamicPropertyAnnotation(testClass);
 		processIncludeDynamicPropertyAnnotation(testClass);
-		return propertyProviders.isEmpty() ? new DynamicTestPropertyContextCustomizer(Collections.emptySet())
-		                                   : new DynamicTestPropertyContextCustomizer(propertyProviders);
+		return propertyProviders.isEmpty()
+				? new DynamicTestPropertyContextCustomizer(Collections.emptySet())
+				: new DynamicTestPropertyContextCustomizer(propertyProviders);
 	}
 
-	private void processDynamicPropertyAnnotation(Class<?> testClass){
+	private void processDynamicPropertyAnnotation(Class<?> testClass) {
 		ReflectionUtils.doWithMethods(testClass, this::getPropertySupplierFromMethod);
 	}
 
 	private void processIncludeDynamicPropertyAnnotation(Class<?> testClass) {
 
 		MergedAnnotations.from(testClass, MergedAnnotations.SearchStrategy.EXHAUSTIVE)
-						 .stream(IncludeDynamicProperty.class)
-						 .map(m -> m.getClassArray("value"))
-						 .flatMap(Stream::of)
-						 .forEach(this::processDynamicPropertyAnnotation);
-
-		//This is AnnotationUtils from junit5
-		// because this version works fine with repeatable and inherited
-
-//		AnnotationUtils.findRepeatableAnnotations(testClass, IncludeDynamicProperty.class)
-//					   .stream()
-//					   .map(IncludeDynamicProperty::value)
-//					   .flatMap(Stream::of)
-//					   .forEach(this::processDynamicPropertyAnnotation);
+				.stream(IncludeDynamicProperty.class).map(m -> m.getClassArray("value"))
+				.flatMap(Stream::of).forEach(this::processDynamicPropertyAnnotation);
 	}
 
 	private void getPropertySupplierFromMethod(Method method) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2018 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.boot.test.context.dynamic.property;
 
 import java.lang.reflect.Method;
@@ -56,6 +72,7 @@ class PropertyProviderTest {
 			// Assert
 			assertThat(env.getProperty("c")).isEqualTo("003");
 		}
+
 	}
 
 	@Nested
@@ -64,36 +81,37 @@ class PropertyProviderTest {
 		@Test
 		void throwErrorWhileInvoke() throws NoSuchMethodException {
 			// Arrange
-			Method method =
-					ErrorWhileRetrieveTheValueFromMethodClass.class.getDeclaredMethod("throwsException");
+			Method method = ErrorWhileRetrieveTheValueFromMethodClass.class
+					.getDeclaredMethod("throwsException");
 			PropertyProvider provider = new PropertyProvider(method);
 			// Act & Assert
 			assertThatThrownBy(provider::getTestPropertyValues)
-					.isInstanceOf(IllegalArgumentException.class)
-					.hasMessage("Error while trying to get a value of dynamic properties.");
+					.isInstanceOf(IllegalArgumentException.class).hasMessage(
+							"Error while trying to get a value of dynamic properties.");
 		}
 
 		@Test
 		void testPropertyProviderWithNonStaticMethod() throws NoSuchMethodException {
 			// Arrange
-			Method method =
-					ErrorWhileRetrieveTheValueFromMethodClass.class.getDeclaredMethod("nonStaticMethod");
+			Method method = ErrorWhileRetrieveTheValueFromMethodClass.class
+					.getDeclaredMethod("nonStaticMethod");
 			// Act & Assert
 			assertThatThrownBy(() -> new PropertyProvider(method))
-					.isInstanceOf(IllegalArgumentException.class)
-					.hasMessage("Annotation @DynamicTestProperty must be used on a static method.");
+					.isInstanceOf(IllegalArgumentException.class).hasMessage(
+							"Annotation @DynamicTestProperty must be used on a static method.");
 		}
 
 		@Test
 		void withoutDynamicPropertyAnnotation() throws NoSuchMethodException {
 			// Arrange
-			Method method =
-					ErrorWhileRetrieveTheValueFromMethodClass.class.getDeclaredMethod("withoutAnnotation");
+			Method method = ErrorWhileRetrieveTheValueFromMethodClass.class
+					.getDeclaredMethod("withoutAnnotation");
 			// Act & Assert
 			assertThatThrownBy(() -> new PropertyProvider(method))
-					.isInstanceOf(IllegalArgumentException.class)
-					.hasMessage("PropertyProvider must be annotated by @DynamicTestProperty");
+					.isInstanceOf(IllegalArgumentException.class).hasMessage(
+							"PropertyProvider must be annotated by @DynamicTestProperty");
 		}
+
 	}
 
 	@Nested
@@ -123,6 +141,7 @@ class PropertyProviderTest {
 			assertThat(firstProvider).isNotEqualTo(secondProvider);
 			assertThat(firstProvider.hashCode()).isNotEqualTo(secondProvider.hashCode());
 		}
+
 	}
 
 	private static class CorrectVariants {
@@ -141,6 +160,7 @@ class PropertyProviderTest {
 		static TestPropertyValues third() {
 			return TestPropertyValues.of("c=003");
 		}
+
 	}
 
 	private static class ErrorWhileRetrieveTheValueFromMethodClass {
@@ -158,5 +178,7 @@ class PropertyProviderTest {
 		private static TestPropertyValues withoutAnnotation() {
 			return TestPropertyValues.of("a=123");
 		}
+
 	}
+
 }

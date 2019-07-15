@@ -23,7 +23,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.MergedContextConfiguration;
 
-
 /**
  * {@link ContextCustomizer} to allow using the {@link DynamicTestProperty} in tests.
  *
@@ -42,11 +41,10 @@ public class DynamicTestPropertyContextCustomizer implements ContextCustomizer {
 			ConfigurableApplicationContext configurableApplicationContext,
 			MergedContextConfiguration mergedContextConfiguration) {
 
-		providers.stream()
-		         .map(PropertyProvider::getTestPropertyValues)
-		         .forEach(testPropertyValues -> testPropertyValues.applyTo(configurableApplicationContext));
+		providers.stream().map(PropertyProvider::getTestPropertyValues)
+				.forEach(testPropertyValues -> testPropertyValues
+						.applyTo(configurableApplicationContext));
 	}
-
 
 	@Override
 	public boolean equals(Object o) {

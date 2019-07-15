@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2018 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.boot.test.context.dynamic.property;
 
 import java.lang.reflect.Method;
@@ -19,7 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 /**
  * Tests for {@link DynamicTestPropertyContextCustomizer}
  *
@@ -27,143 +42,152 @@ import static org.mockito.Mockito.when;
  */
 class DynamicTestPropertyContextCustomizerTest {
 
-    private ConfigurableApplicationContext mockContext;
-    private ConfigurableEnvironment mockEnv;
+	private ConfigurableApplicationContext mockContext;
 
-    @BeforeEach
-    void setUp() {
-        mockContext = mock(ConfigurableApplicationContext.class);
-        mockEnv = new MockEnvironment();
-        when(mockContext.getEnvironment()).thenReturn(mockEnv);
-    }
+	private ConfigurableEnvironment mockEnv;
 
-    @Nested
-    class CustomizeContextTests {
+	@BeforeEach
+	void setUp() {
+		mockContext = mock(ConfigurableApplicationContext.class);
+		mockEnv = new MockEnvironment();
+		when(mockContext.getEnvironment()).thenReturn(mockEnv);
+	}
 
-        @Test
-        void customizerWithTheSinglePropertyProvider() throws NoSuchMethodException {
-            // Arrange
-            Method method = TestClass.class.getDeclaredMethod("singleProperty");
-            PropertyProvider provider = new PropertyProvider(method);
-            // Act
-            new DynamicTestPropertyContextCustomizer(setOf(provider))
-                    .customizeContext(mockContext, null);
-            // Assert
-            assertThat(mockEnv.getProperty("key")).isEqualTo("051187");
-        }
+	@Nested
+	class CustomizeContextTests {
 
-        @Test
-        void customizerWithMultiplePropertyProvider() throws NoSuchMethodException {
-            // Arrange
-            Method firstMethod = TestClass.class.getDeclaredMethod("singleProperty");
-            Method secondMethod = TestClass.class.getDeclaredMethod("multipleProperties");
+		@Test
+		void customizerWithTheSinglePropertyProvider() throws NoSuchMethodException {
+			// Arrange
+			Method method = TestClass.class.getDeclaredMethod("singleProperty");
+			PropertyProvider provider = new PropertyProvider(method);
+			// Act
+			new DynamicTestPropertyContextCustomizer(setOf(provider))
+					.customizeContext(mockContext, null);
+			// Assert
+			assertThat(mockEnv.getProperty("key")).isEqualTo("051187");
+		}
 
-            Set<PropertyProvider> providers = setOf(new PropertyProvider(firstMethod),
-                                                    new PropertyProvider(secondMethod));
-            // Act
-            new DynamicTestPropertyContextCustomizer(providers)
-                    .customizeContext(mockContext, null);
-            // Assert
-            assertThat(mockEnv.getProperty("key")).isEqualTo("051187");
-            assertThat(mockEnv.getProperty("a")).isEqualTo("1111");
-            assertThat(mockEnv.getProperty("b")).isEqualTo("2222");
-        }
-    }
+		@Test
+		void customizerWithMultiplePropertyProvider() throws NoSuchMethodException {
+			// Arrange
+			Method firstMethod = TestClass.class.getDeclaredMethod("singleProperty");
+			Method secondMethod = TestClass.class.getDeclaredMethod("multipleProperties");
 
+			Set<PropertyProvider> providers = setOf(new PropertyProvider(firstMethod),
+					new PropertyProvider(secondMethod));
+			// Act
+			new DynamicTestPropertyContextCustomizer(providers)
+					.customizeContext(mockContext, null);
+			// Assert
+			assertThat(mockEnv.getProperty("key")).isEqualTo("051187");
+			assertThat(mockEnv.getProperty("a")).isEqualTo("1111");
+			assertThat(mockEnv.getProperty("b")).isEqualTo("2222");
+		}
 
-    @Nested
-    class EqualsAndHashCodeTests {
+	}
 
-        @Test
-        void checkEqualMethods() throws NoSuchMethodException {
-            // Arrange
-            Method method = TestClass.class.getDeclaredMethod("singleProperty");
-            PropertyProvider firstProvider = new PropertyProvider(method);
-            PropertyProvider secondProvider = new PropertyProvider(method);
+	@Nested
+	class EqualsAndHashCodeTests {
 
-            // Act
-            DynamicTestPropertyContextCustomizer firstCustomizer =
-                    new DynamicTestPropertyContextCustomizer(setOf(firstProvider));
+		@Test
+		void checkEqualMethods() throws NoSuchMethodException {
+			// Arrange
+			Method method = TestClass.class.getDeclaredMethod("singleProperty");
+			PropertyProvider firstProvider = new PropertyProvider(method);
+			PropertyProvider secondProvider = new PropertyProvider(method);
 
-            DynamicTestPropertyContextCustomizer secondCustomizer =
-                    new DynamicTestPropertyContextCustomizer(setOf(secondProvider));
+			// Act
+			DynamicTestPropertyContextCustomizer firstCustomizer = new DynamicTestPropertyContextCustomizer(
+					setOf(firstProvider));
 
-            // Assert
-            assertThat(firstCustomizer).isEqualTo(secondCustomizer);
-            assertThat(firstCustomizer.hashCode()).isEqualTo(secondCustomizer.hashCode());
-        }
+			DynamicTestPropertyContextCustomizer secondCustomizer = new DynamicTestPropertyContextCustomizer(
+					setOf(secondProvider));
 
-        @Test
-        void checkNotEqualMethods() throws NoSuchMethodException {
-            // Arrange
-            Method firstMethod = TestClass.class.getDeclaredMethod("singleProperty");
-            PropertyProvider firstProvider = new PropertyProvider(firstMethod);
-            Method secondMethod = TestClass.class.getDeclaredMethod("multipleProperties");
-            PropertyProvider secondProvider = new PropertyProvider(secondMethod);
+			// Assert
+			assertThat(firstCustomizer).isEqualTo(secondCustomizer);
+			assertThat(firstCustomizer.hashCode()).isEqualTo(secondCustomizer.hashCode());
+		}
 
-            // Act
-            DynamicTestPropertyContextCustomizer firstCustomizer =
-                    new DynamicTestPropertyContextCustomizer(setOf(firstProvider));
+		@Test
+		void checkNotEqualMethods() throws NoSuchMethodException {
+			// Arrange
+			Method firstMethod = TestClass.class.getDeclaredMethod("singleProperty");
+			PropertyProvider firstProvider = new PropertyProvider(firstMethod);
+			Method secondMethod = TestClass.class.getDeclaredMethod("multipleProperties");
+			PropertyProvider secondProvider = new PropertyProvider(secondMethod);
 
-            DynamicTestPropertyContextCustomizer secondCustomizer =
-                    new DynamicTestPropertyContextCustomizer(setOf(secondProvider));
+			// Act
+			DynamicTestPropertyContextCustomizer firstCustomizer = new DynamicTestPropertyContextCustomizer(
+					setOf(firstProvider));
 
-            // Assert
-            assertThat(firstCustomizer).isNotEqualTo(secondCustomizer);
-            assertThat(firstCustomizer.hashCode()).isNotEqualTo(secondCustomizer.hashCode());
-        }
+			DynamicTestPropertyContextCustomizer secondCustomizer = new DynamicTestPropertyContextCustomizer(
+					setOf(secondProvider));
 
-        @Test
-        void checkEqualsForMethodInBaseClass() throws NoSuchMethodException {
-            // Arrange
-            Method firstMethod = ReflectionUtils.findMethod(FirstChild.class, "property").get();
-            PropertyProvider firstProvider = new PropertyProvider(firstMethod);
+			// Assert
+			assertThat(firstCustomizer).isNotEqualTo(secondCustomizer);
+			assertThat(firstCustomizer.hashCode())
+					.isNotEqualTo(secondCustomizer.hashCode());
+		}
 
-            Method secondMethod = ReflectionUtils.findMethod(SecondChild.class, "property").get();
-            PropertyProvider secondProvider = new PropertyProvider(secondMethod);
+		@Test
+		void checkEqualsForMethodInBaseClass() throws NoSuchMethodException {
+			// Arrange
+			Method firstMethod = ReflectionUtils.findMethod(FirstChild.class, "property")
+					.get();
+			PropertyProvider firstProvider = new PropertyProvider(firstMethod);
 
-            // Act
-            DynamicTestPropertyContextCustomizer firstCustomizer =
-                    new DynamicTestPropertyContextCustomizer(setOf(firstProvider));
+			Method secondMethod = ReflectionUtils
+					.findMethod(SecondChild.class, "property").get();
+			PropertyProvider secondProvider = new PropertyProvider(secondMethod);
 
-            DynamicTestPropertyContextCustomizer secondCustomizer =
-                    new DynamicTestPropertyContextCustomizer(setOf(secondProvider));
+			// Act
+			DynamicTestPropertyContextCustomizer firstCustomizer = new DynamicTestPropertyContextCustomizer(
+					setOf(firstProvider));
 
-            // Assert
-            assertThat(firstCustomizer).isEqualTo(secondCustomizer);
-            assertThat(firstCustomizer.hashCode()).isEqualTo(secondCustomizer.hashCode());
-        }
-    }
+			DynamicTestPropertyContextCustomizer secondCustomizer = new DynamicTestPropertyContextCustomizer(
+					setOf(secondProvider));
 
-    private static Set<PropertyProvider> setOf(PropertyProvider... providers) {
-        return new HashSet<>(Arrays.asList(providers));
-    }
+			// Assert
+			assertThat(firstCustomizer).isEqualTo(secondCustomizer);
+			assertThat(firstCustomizer.hashCode()).isEqualTo(secondCustomizer.hashCode());
+		}
 
-    private static class TestClass {
+	}
 
-        @DynamicTestProperty
-        static TestPropertyValues singleProperty() {
-            return TestPropertyValues.of("key=051187");
-        }
+	private static Set<PropertyProvider> setOf(PropertyProvider... providers) {
+		return new HashSet<>(Arrays.asList(providers));
+	}
 
-        @DynamicTestProperty
-        static TestPropertyValues multipleProperties() {
-            return TestPropertyValues.of("a=1111",
-										 "b=2222");
-        }
-    }
+	private static class TestClass {
 
-    private static abstract class BaseTest {
+		@DynamicTestProperty
+		static TestPropertyValues singleProperty() {
+			return TestPropertyValues.of("key=051187");
+		}
 
-        @DynamicTestProperty
-        static TestPropertyValues property() {
-            return TestPropertyValues.of("key=051187");
-        }
-    }
+		@DynamicTestProperty
+		static TestPropertyValues multipleProperties() {
+			return TestPropertyValues.of("a=1111", "b=2222");
+		}
 
-    private static class FirstChild extends BaseTest {
-    }
+	}
 
-    private static class SecondChild extends BaseTest {
-    }
+	private static abstract class BaseTest {
+
+		@DynamicTestProperty
+		static TestPropertyValues property() {
+			return TestPropertyValues.of("key=051187");
+		}
+
+	}
+
+	private static class FirstChild extends BaseTest {
+
+	}
+
+	private static class SecondChild extends BaseTest {
+
+	}
+
 }

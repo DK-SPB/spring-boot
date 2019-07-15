@@ -6,10 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 /**
- * {@code @IncludeDynamicProperties} is a container for one or more {@code @IncludeDynamicProperty}
- * declarations.
+ * {@code @IncludeDynamicProperties} is a container for one or more
+ * {@code @IncludeDynamicProperty} declarations.
  *
  * @author Korovin Anatoliy
  */
@@ -18,5 +17,6 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface IncludeDynamicProperties {
 
-    IncludeDynamicProperty[] value();
+	IncludeDynamicProperty[] value();
+
 }

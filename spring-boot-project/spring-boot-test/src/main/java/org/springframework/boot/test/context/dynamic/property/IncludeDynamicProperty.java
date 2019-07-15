@@ -8,13 +8,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created on 2019-07-11
- * <p>
- * You can use this annotation to declare a class for processing
+ * Annotation that can be used to declare a class for processing
  * {@link DynamicTestProperty} methods.
  * <p>
- * This is supposed to use {@link DynamicTestProperty} in your meta-annotations
- * by declaring classes with dynamic properties in the {@link IncludeDynamicProperty} annotation.
+ * This is supposed to use {@link DynamicTestProperty} in your meta-annotations by
+ * declaring classes with dynamic properties in the {@link IncludeDynamicProperty}
+ * annotation.
  *
  * @author Korovin Anatoliy
  */
@@ -24,5 +23,10 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface IncludeDynamicProperty {
 
-    Class<?>[] value();
+	/**
+	 * The classes to use for loading {@link DynamicTestProperty}
+	 * @return classes with the nested dynamic property methods.
+	 */
+	Class<?>[] value();
+
 }
