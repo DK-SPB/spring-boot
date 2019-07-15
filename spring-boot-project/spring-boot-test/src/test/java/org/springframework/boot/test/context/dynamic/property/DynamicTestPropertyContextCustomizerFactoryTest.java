@@ -16,7 +16,10 @@
 
 package org.springframework.boot.test.context.dynamic.property;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.Test;
@@ -34,114 +37,105 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class DynamicTestPropertyContextCustomizerFactoryTest {
 
-	private DynamicTestPropertyContextCustomizerFactory customizerFactory = new DynamicTestPropertyContextCustomizerFactory();
+    private DynamicTestPropertyContextCustomizerFactory customizerFactory = new DynamicTestPropertyContextCustomizerFactory();
+
+    @Test
+    void singleDynamicTestProperty() throws NoSuchMethodException {
+        // Arrange
+        Method method = SingleTestPropertyClass.class.getDeclaredMethod("getProps");
+
+        Set<PropertyProvider> providers =
+                new HashSet<>(Arrays.asList(new PropertyProvider(method)));
+
+        DynamicTestPropertyContextCustomizer expectedCustomizer =
+                new DynamicTestPropertyContextCustomizer(providers);
+        // Act
+        ContextCustomizer customizer = this.customizerFactory
+                .createContextCustomizer(SingleTestPropertyClass.class, null);
+        // Assert
+        assertThat(customizer).isEqualTo(expectedCustomizer);
+    }
+
+
+    @Test
+    void multipleDynamicTestProperty() throws NoSuchMethodException {
+        // Arrange
+        Method firstMethod = MultipleTestPropertyClass.class.getDeclaredMethod("firstProps");
+        Method secondMethod = MultipleTestPropertyClass.class.getDeclaredMethod("secondProps");
+
+        Set<PropertyProvider> providers =
+                new HashSet<>(Arrays.asList(new PropertyProvider(firstMethod),
+                                            new PropertyProvider(secondMethod)));
+
+        DynamicTestPropertyContextCustomizer expectedCustomizer =
+                new DynamicTestPropertyContextCustomizer(providers);
+
+        // Act
+        ContextCustomizer customizer = this.customizerFactory
+                .createContextCustomizer(MultipleTestPropertyClass.class, null);
+
+        // Assert
+        assertThat(customizer).isEqualTo(expectedCustomizer);
+    }
 
 	@Test
-	void singleDynamicTestProperty() {
-		// Arrange
-		DynamicTestPropertyContextCustomizer expectedCustomizer = new DynamicTestPropertyContextCustomizer(
-				Arrays.asList(TestPropertyValues.of("a=123")));
-		// Act
-		ContextCustomizer customizer = this.customizerFactory
-				.createContextCustomizer(SingleTestPropertyClass.class, null);
-		// Assert
-		assertThat(customizer).isEqualTo(expectedCustomizer);
-	}
+    void notStaticMethod() {
 
-	@Test
-	void multipleDynamicTestProperty() {
-		// Arrange
-		DynamicTestPropertyContextCustomizer expectedCustomizer = new DynamicTestPropertyContextCustomizer(
-				Arrays.asList(TestPropertyValues.of("a=123"),
-						TestPropertyValues.of("b=456")));
-		// Act
-		ContextCustomizer customizer = this.customizerFactory
-				.createContextCustomizer(MultipleTestPropertyClass.class, null);
-		// Assert
-		assertThat(customizer).isEqualTo(expectedCustomizer);
-	}
+        ThrowableAssert.ThrowingCallable act = () -> this.customizerFactory
+                .createContextCustomizer(ErrorWithNoStaticMethodClass.class, null);
 
-	@Test
-	void notStaticMethod() {
+        assertThatThrownBy(act).isInstanceOf(IllegalArgumentException.class)
+                               .hasMessage("Annotation @DynamicTestProperty must be used on a static method.");
+    }
 
-		ThrowableAssert.ThrowingCallable act = () -> this.customizerFactory
-				.createContextCustomizer(ErrorWithNoStaticMethodClass.class, null);
+    @Test
+    void wrongReturnTypeOfTheDynamicTestProperty() {
 
-		assertThatThrownBy(act).isInstanceOf(DynamicTestPropertyException.class)
-				.hasMessage(
-						"Annotation DynamicTestProperty must be used on a static method.");
-	}
+        ThrowableAssert.ThrowingCallable act = () -> this.customizerFactory
+                .createContextCustomizer(ErrorWithWrongReturnTypeClass.class, null);
 
-	@Test
-	void wrongReturnTypeOfTheDynamicTestProperty() {
+        assertThatThrownBy(act).isInstanceOf(IllegalArgumentException.class)
+                               .hasMessage("@DynamicTestProperty method must return the instance of TestPropertyValues.");
+    }
 
-		ThrowableAssert.ThrowingCallable act = () -> this.customizerFactory
-				.createContextCustomizer(ErrorWithWrongReturnTypeClass.class, null);
 
-		assertThatThrownBy(act).isInstanceOf(DynamicTestPropertyException.class)
-				.hasMessage(
-						"DynamicTestProperty method must return the instance of TestPropertyValues.");
-	}
+    private static class SingleTestPropertyClass {
 
-	@Test
-	void errorWhileTryingToGetTheValueOfProperties() {
+        @DynamicTestProperty
+        private static TestPropertyValues getProps() {
+            return TestPropertyValues.of("a=123");
+        }
 
-		ThrowableAssert.ThrowingCallable act = () -> this.customizerFactory
-				.createContextCustomizer(ErrorWhileRetrieveTheValueFromMethodClass.class,
-						null);
+    }
 
-		assertThatThrownBy(act).isInstanceOf(DynamicTestPropertyException.class)
-				.hasMessage("Error while trying to get a value of dynamic properties.");
-	}
+    private static class MultipleTestPropertyClass {
 
-	private static class SingleTestPropertyClass {
+        @DynamicTestProperty
+        private static TestPropertyValues firstProps() {
+            return TestPropertyValues.of("a=123");
+        }
 
-		@DynamicTestProperty
-		private static TestPropertyValues getProps() {
-			return TestPropertyValues.of("a=123");
-		}
+        @DynamicTestProperty
+        private static TestPropertyValues secondProps() {
+            return TestPropertyValues.of("b=456");
+        }
 
-	}
+    }
 
-	private static class MultipleTestPropertyClass {
+    private static class ErrorWithNoStaticMethodClass {
 
-		@DynamicTestProperty
-		private static TestPropertyValues firstProps() {
-			return TestPropertyValues.of("a=123");
-		}
+        @DynamicTestProperty
+        private TestPropertyValues getProps() {
+            return TestPropertyValues.of("a=123");
+        }
 
-		@DynamicTestProperty
-		private static TestPropertyValues secondProps() {
-			return TestPropertyValues.of("b=456");
-		}
+    }
 
-	}
+    private static class ErrorWithWrongReturnTypeClass {
 
-	private static class ErrorWithNoStaticMethodClass {
-
-		@DynamicTestProperty
-		private TestPropertyValues getProps() {
-			return TestPropertyValues.of("a=123");
-		}
-
-	}
-
-	private static class ErrorWithWrongReturnTypeClass {
-
-		@DynamicTestProperty
-		private static String getProps() {
-			return "a=123";
-		}
-
-	}
-
-	private static class ErrorWhileRetrieveTheValueFromMethodClass {
-
-		@DynamicTestProperty
-		private static TestPropertyValues getProps() {
-			throw new RuntimeException("oops");
-		}
-
-	}
-
+        @DynamicTestProperty
+        private static String getProps() {
+            return "a=123";
+        }
+    }
 }

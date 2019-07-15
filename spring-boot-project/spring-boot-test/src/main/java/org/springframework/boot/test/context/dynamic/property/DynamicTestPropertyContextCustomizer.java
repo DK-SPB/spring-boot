@@ -16,15 +16,13 @@
 
 package org.springframework.boot.test.context.dynamic.property;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.MergedContextConfiguration;
+
 
 /**
  * {@link ContextCustomizer} to allow using the {@link DynamicTestProperty} in tests.
@@ -33,20 +31,22 @@ import org.springframework.test.context.MergedContextConfiguration;
  */
 public class DynamicTestPropertyContextCustomizer implements ContextCustomizer {
 
-	private Set<TestPropertyValues> properties;
+	private final Set<PropertyProvider> providers;
 
-	public DynamicTestPropertyContextCustomizer(List<TestPropertyValues> properties) {
-		this.properties = new HashSet<>(properties);
+	public DynamicTestPropertyContextCustomizer(Set<PropertyProvider> providers) {
+		this.providers = providers;
 	}
 
 	@Override
 	public void customizeContext(
 			ConfigurableApplicationContext configurableApplicationContext,
 			MergedContextConfiguration mergedContextConfiguration) {
-		for (TestPropertyValues property : this.properties) {
-			property.applyTo(configurableApplicationContext);
-		}
+
+		providers.stream()
+		         .map(PropertyProvider::getTestPropertyValues)
+		         .forEach(testPropertyValues -> testPropertyValues.applyTo(configurableApplicationContext));
 	}
+
 
 	@Override
 	public boolean equals(Object o) {
@@ -57,12 +57,12 @@ public class DynamicTestPropertyContextCustomizer implements ContextCustomizer {
 			return false;
 		}
 		DynamicTestPropertyContextCustomizer that = (DynamicTestPropertyContextCustomizer) o;
-		return Objects.equals(this.properties, that.properties);
+		return Objects.equals(this.providers, that.providers);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.properties);
+		return Objects.hash(this.providers);
 	}
 
 }

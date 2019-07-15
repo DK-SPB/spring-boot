@@ -17,14 +17,19 @@
 package org.springframework.boot.test.context.dynamic.property;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
-import org.springframework.boot.test.util.TestPropertyValues;
+import org.junit.platform.commons.util.AnnotationUtils;
+
+import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * {@link ContextCustomizerFactory} to allow using the {@link DynamicTestProperty} in
@@ -35,43 +40,43 @@ import org.springframework.test.context.ContextCustomizerFactory;
 public class DynamicTestPropertyContextCustomizerFactory
 		implements ContextCustomizerFactory {
 
+	private Set<PropertyProvider> propertyProviders = new HashSet<>();
+
 	@Override
-	public ContextCustomizer createContextCustomizer(Class<?> aClass,
-			List<ContextConfigurationAttributes> list) {
+	public ContextCustomizer createContextCustomizer(Class<?> testClass,
+													 List<ContextConfigurationAttributes> list) {
 
-		List<TestPropertyValues> properties = new ArrayList<>();
-
-		for (Method method : aClass.getDeclaredMethods()) {
-
-			if (!method.isAnnotationPresent(DynamicTestProperty.class)) {
-				continue;
-			}
-
-			if (!Modifier.isStatic(method.getModifiers())) {
-				throw new DynamicTestPropertyException(
-						"Annotation DynamicTestProperty must be used on a static method.");
-			}
-
-			if (!method.getReturnType().equals(TestPropertyValues.class)) {
-				throw new DynamicTestPropertyException(
-						"DynamicTestProperty method must return the instance of TestPropertyValues.");
-			}
-
-			properties.add(getDynamicPropertyValues(method));
-		}
-
-		return properties.isEmpty() ? null
-				: new DynamicTestPropertyContextCustomizer(properties);
+		processDynamicPropertyAnnotation(testClass);
+		processIncludeDynamicPropertyAnnotation(testClass);
+		return propertyProviders.isEmpty() ? new DynamicTestPropertyContextCustomizer(Collections.emptySet())
+		                                   : new DynamicTestPropertyContextCustomizer(propertyProviders);
 	}
 
-	private TestPropertyValues getDynamicPropertyValues(Method method) {
-		try {
-			method.setAccessible(true);
-			return (TestPropertyValues) method.invoke(null);
-		}
-		catch (Exception ex) {
-			throw new DynamicTestPropertyException(
-					"Error while trying to get a value of dynamic properties.", ex);
+	private void processDynamicPropertyAnnotation(Class<?> testClass){
+		ReflectionUtils.doWithMethods(testClass, this::getPropertySupplierFromMethod);
+	}
+
+	private void processIncludeDynamicPropertyAnnotation(Class<?> testClass) {
+
+		MergedAnnotations.from(testClass, MergedAnnotations.SearchStrategy.EXHAUSTIVE)
+						 .stream(IncludeDynamicProperty.class)
+						 .map(m -> m.getClassArray("value"))
+						 .flatMap(Stream::of)
+						 .forEach(this::processDynamicPropertyAnnotation);
+
+		//This is AnnotationUtils from junit5
+		// because this version works fine with repeatable and inherited
+
+//		AnnotationUtils.findRepeatableAnnotations(testClass, IncludeDynamicProperty.class)
+//					   .stream()
+//					   .map(IncludeDynamicProperty::value)
+//					   .flatMap(Stream::of)
+//					   .forEach(this::processDynamicPropertyAnnotation);
+	}
+
+	private void getPropertySupplierFromMethod(Method method) {
+		if (method.isAnnotationPresent(DynamicTestProperty.class)) {
+			propertyProviders.add(new PropertyProvider(method));
 		}
 	}
 
